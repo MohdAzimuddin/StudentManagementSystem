@@ -1,6 +1,6 @@
 const FeesSummaryCard = ({ total, paid, remaining }) => {
     const paidPercentage = Math.round((paid / total) * 100)
-  
+   
     return (
       <div>
         <h2 className="text-lg font-semibold mb-4">Fees Summary</h2>
