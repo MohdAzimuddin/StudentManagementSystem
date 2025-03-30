@@ -1,7 +1,7 @@
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 
 const COLORS = ['#4f46e5', '#f43f5e', '#f59e0b']
-
+ 
 const AttendanceChart = ({ data }) => {
   return (
     <div className="h-64">
