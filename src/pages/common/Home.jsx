@@ -5,7 +5,7 @@ import { useState } from 'react';
 const Home = ({ setStudentName }) => {
   const { isAuthenticated } = useAuth();
   const [name, setName] = useState('');
-
+  
   const handleNameChange = (e) => {
     setName(e.target.value);
   };
