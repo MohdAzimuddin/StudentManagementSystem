@@ -10,7 +10,7 @@ import Fees from './pages/fees/Fees';
 import Home from './pages/common/Home';
 import { Toaster } from 'react-hot-toast';
 import { useState } from 'react';
-
+ 
 const App = () => {
   const [studentName, setStudentName] = useState(""); // Store student's name
 
