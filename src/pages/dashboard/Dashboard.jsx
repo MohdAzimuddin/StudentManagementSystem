@@ -6,7 +6,7 @@ import FeesSummaryCard from '../../components/common/FeesSummaryCard';
 
 const Dashboard = ({ studentName }) => {
   const { user } = useContext(AuthContext);
-
+ 
   // Mock data - replace with API calls
   const testData = [
     { name: 'Jan', score: 75 },
