@@ -7,7 +7,7 @@ import Attendance from './pages/attendance/Attendance'
 import Fees from './pages/fees/Fees'
 import Login from './pages/auth/Login'
 import NotFound from './pages/common/Home';
-
+ 
 // Public Route - only accessible when not authenticated
 export const PublicRoute = () => {
   const { isAuthenticated } = useContext(AuthContext)
