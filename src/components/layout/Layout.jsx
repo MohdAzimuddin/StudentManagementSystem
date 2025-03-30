@@ -6,7 +6,7 @@ import { FiMenu, FiX, FiLogOut } from 'react-icons/fi';
 const Layout = () => {
   const { user, logout } = useContext(AuthContext);
   const [menuOpen, setMenuOpen] = useState(false);
-
+ 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navigation */}
