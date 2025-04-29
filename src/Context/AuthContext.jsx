@@ -26,7 +26,7 @@ export const AuthProvider = ({ children }) => {
       id: 101,
       email: 'teacher@example.com',
       password: 'teach123',
-      name: 'Math Mentor',
+      name: 'Teacher',
       role: 'teacher',
       subjects: ['Mathematics', 'Physics']
     }
