@@ -62,7 +62,7 @@ const Home = ({ setStudentName }) => {
                 : 'Go to Student Dashboard'
               : 'Studnet Login'}
           </Link>
-
+ 
           {!isAuthenticated && (
             <Link
               to="/teacher-login"
