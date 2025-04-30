@@ -60,7 +60,7 @@ const Home = ({ setStudentName }) => {
               ? user?.role === 'teacher' 
                 ? 'Go to Teacher Dashboard' 
                 : 'Go to Student Dashboard'
-              : 'Go to Login'}
+              : 'Studnet Login'}
           </Link>
 
           {!isAuthenticated && (

@@ -213,16 +213,16 @@
 import { useContext } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { AuthContext } from './Context/AuthContext';
-import Dashboard from './pages/dashboard/Dashboard';
-import TeacherDashboard from './pages/teacher/TeacherDashboard';
-import TestRecords from './pages/tests/TestRecords';
-import Attendance from './pages/attendance/Attendance';
-import Fees from './pages/fees/Fees';
-import Login from './pages/auth/Login';
-import TeacherLogin from './pages/auth/TeacherLogin';
-import TestAssignment from './pages/teacher/TestAssignment';
-import AssignedTests from './pages/tests/AssignedTests';
-import NotFound from './pages/common/NotFound';
+// import Dashboard from './pages/dashboard/Dashboard';
+// import TeacherDashboard from './pages/teacher/TeacherDashboard';
+// import TestRecords from './pages/tests/TestRecords';
+// import Attendance from './pages/attendance/Attendance';
+// import Fees from './pages/fees/Fees';
+// import Login from './pages/auth/Login';
+// import TeacherLogin from './pages/auth/TeacherLogin';
+// import TestAssignment from './pages/teacher/TestAssignment';
+// import AssignedTests from './pages/tests/AssignedTests';
+// import NotFound from './pages/common/NotFound';
 import LoadingSpinner from './pages/common/LoadingSpinner';
 
 export const PublicRoute = () => {
