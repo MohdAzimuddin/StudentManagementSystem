@@ -115,7 +115,7 @@ const AssignedTests = () => {
   const refreshTests = () => {
     setLoading(true);
     
-    // Small delay to make the loading state visible
+    // Small delay to make the loading state visiblegit 
     setTimeout(() => {
       const storedTests = localStorage.getItem('assignedTests');
       console.log("Raw tests from localStorage:", storedTests);
@@ -159,6 +159,20 @@ const AssignedTests = () => {
     localStorage.setItem('checkUnansweredQuestions', 'true');
   };
 
+  // Function to check if a test has image-based questions or options
+  const hasImages = (test) => {
+    if (!test.questions) return false;
+    
+    return test.questions.some(q => 
+      // Check for question images
+      q.questionImage || 
+      (typeof q.question === 'object' && q.question.image) ||
+      // Check for option images
+      q.optionImages?.some(img => img) ||
+      q.options?.some(opt => typeof opt === 'object' && opt.image)
+    );
+  };
+
   // Render loading state
   if (loading) {
     return (
@@ -193,8 +207,8 @@ const AssignedTests = () => {
             to="/completed-tests"
             className="text-sm text-green-600 hover:underline"
           >
-            <button   className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 m-auto">
-            View your completed tests
+            <button className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 m-auto">
+              View your completed tests
             </button>
           </Link>
         </div>
@@ -221,6 +235,13 @@ const AssignedTests = () => {
                   <p className="text-gray-600">Total Marks: {test.totalMarks}</p>
                   <p className="text-gray-600">Duration: {test.duration} minutes</p>
                   <p className="text-gray-600">Teacher: {test.teacherName}</p>
+                  {hasImages(test) && (
+                    <div className="mt-2">
+                      <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                        Contains visual elements
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <Link
                   to={`/take-test/${test.id}`}
