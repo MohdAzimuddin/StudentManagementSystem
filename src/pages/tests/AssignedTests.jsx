@@ -8,7 +8,7 @@ const AssignedTests = () => {
   const [tests, setTests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [completedTests, setCompletedTests] = useState([]);
-
+ 
   useEffect(() => {
     // Function to fetch tests from localStorage
     const fetchTests = () => {
