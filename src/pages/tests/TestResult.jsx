@@ -62,6 +62,69 @@ const TestResult = () => {
     }
   }, [testId, user, navigate]);
 
+  // Helper function to render question content with possible images
+  const renderQuestionContent = (question) => {
+    if (!question) return null;
+    
+    // Check if question is an object with text and image properties
+    if (typeof question === 'object' && question.text) {
+      return (
+        <>
+          <span>{question.text}</span>
+          {question.image && (
+            <img 
+              src={question.image} 
+              alt="Question illustration" 
+              className="mt-2 max-h-40 rounded" 
+            />
+          )}
+        </>
+      );
+    }
+    
+    // Render as simple text with possible image from questionImage property
+    return (
+      <>
+        <span>{question}</span>
+      </>
+    );
+  };
+
+  // Helper function to render option content with possible images
+  const renderOptionContent = (option, optionImage) => {
+    if (!option) return null;
+    
+    // Check if option is an object with text and image properties
+    if (typeof option === 'object' && option.text) {
+      return (
+        <>
+          <span>{option.text}</span>
+          {option.image && (
+            <img 
+              src={option.image} 
+              alt="Option visual" 
+              className="mt-2 max-h-24 rounded block" 
+            />
+          )}
+        </>
+      );
+    }
+    
+    // Render as simple text with possible image from optionImages array
+    return (
+      <>
+        <span>{option}</span>
+        {optionImage && (
+          <img 
+            src={optionImage} 
+            alt="Option visual" 
+            className="mt-2 max-h-24 rounded block" 
+          />
+        )}
+      </>
+    );
+  };
+
   // Loading state
   if (loading) {
     return (
@@ -153,7 +216,18 @@ const TestResult = () => {
             <div className="space-y-6">
               {test.questions.map((question, index) => {
                 const userAnswer = result.answers[question.id];
-                const isCorrect = userAnswer === question.correctAnswer;
+                // Handle different question formats to determine if answer is correct
+                let isCorrect = false;
+                
+                if (typeof question.correctAnswer === 'object' && question.correctAnswer.text) {
+                  isCorrect = userAnswer === question.correctAnswer.text;
+                } else if (question.correctAnswerIndex !== undefined) {
+                  // Check if correct by the index
+                  isCorrect = userAnswer === question.options[question.correctAnswerIndex];
+                } else {
+                  // Default comparison
+                  isCorrect = userAnswer === question.correctAnswer;
+                }
                 
                 return (
                   <div 
@@ -162,11 +236,20 @@ const TestResult = () => {
                       isCorrect ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
                     }`}
                   >
-                    <div className="flex justify-between">
-                      <h4 className="font-medium">
-                        Q{index + 1}: {question.question}
-                      </h4>
-                      <span className="font-medium">
+                    <div className="flex justify-between flex-wrap">
+                      <div className="font-medium mb-2 max-w-xl">
+                        <span className="mr-2">Q{index + 1}:</span>
+                        {renderQuestionContent(question.question)}
+                        {question.questionImage && (
+                          <img 
+                            src={question.questionImage} 
+                            alt="Question illustration" 
+                            className="mt-2 max-h-40 rounded" 
+                          />
+                        )}
+                      </div>
+                      
+                      <span className="font-medium whitespace-nowrap">
                         {isCorrect ? (
                           <span className="text-green-600">✓ Correct</span>
                         ) : (
@@ -176,30 +259,53 @@ const TestResult = () => {
                     </div>
                     
                     <div className="mt-3 space-y-2">
-                      {question.options.map((option, optIndex) => (
-                        <div 
-                          key={optIndex}
-                          className={`p-2 rounded ${
-                            option === question.correctAnswer
-                              ? 'bg-green-100 border border-green-300'
-                              : option === userAnswer && option !== question.correctAnswer
-                                ? 'bg-red-100 border border-red-300'
-                                : 'bg-gray-50'
-                          }`}
-                        >
-                          <div className="flex items-center">
-                            <span className="mr-2 font-bold">
-                              {String.fromCharCode(65 + optIndex)}.
-                            </span>
-                            <span>{option}</span>
-                            {option === question.correctAnswer && (
-                              <span className="ml-auto text-green-600 text-sm font-medium">
-                                Correct answer
+                      {question.options.map((option, optIndex) => {
+                        // Determine if this option is correct
+                        let isCorrectOption = false;
+                        if (question.correctAnswerIndex !== undefined) {
+                          isCorrectOption = optIndex === question.correctAnswerIndex;
+                        } else {
+                          isCorrectOption = option === question.correctAnswer;
+                        }
+                        
+                        // Determine if this was the user's choice
+                        let isUserChoice = false;
+                        if (typeof option === 'object' && option.text) {
+                          isUserChoice = userAnswer === option.text;
+                        } else {
+                          isUserChoice = userAnswer === option;
+                        }
+                        
+                        return (
+                          <div 
+                            key={optIndex}
+                            className={`p-2 rounded ${
+                              isCorrectOption
+                                ? 'bg-green-100 border border-green-300'
+                                : isUserChoice && !isCorrectOption
+                                  ? 'bg-red-100 border border-red-300'
+                                  : 'bg-gray-50'
+                            }`}
+                          >
+                            <div className="flex items-start">
+                              <span className="mr-2 font-bold">
+                                {String.fromCharCode(65 + optIndex)}.
                               </span>
-                            )}
+                              <div className="flex-1">
+                                {renderOptionContent(
+                                  option, 
+                                  question.optionImages && question.optionImages[optIndex]
+                                )}
+                              </div>
+                              {isCorrectOption && (
+                                <span className="ml-auto text-green-600 text-sm font-medium whitespace-nowrap">
+                                  Correct answer
+                                </span>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                     
                     <div className="mt-2 text-right">
