@@ -182,7 +182,6 @@ const TestAssignment = () => {
     const subject = customQuestion.subject;
     const chapter = customQuestion.chapter;
 
-    // Create new question object
     const newQuestion = {
       id: editingQuestion ? editingQuestion.id : `custom-${Date.now()}`,
       question: customQuestion.question,
@@ -197,24 +196,20 @@ const TestAssignment = () => {
       isCustom: true
     };
 
-    // Update local storage
     const storedQB = JSON.parse(localStorage.getItem('questionBank') || '{}');
     if (!storedQB[subject]) storedQB[subject] = {};
     if (!storedQB[subject][chapter]) storedQB[subject][chapter] = [];
     
     if (editingQuestion) {
-      // Find and replace the question in local storage
       const index = storedQB[subject][chapter].findIndex(q => q.id === newQuestion.id);
       if (index >= 0) {
         storedQB[subject][chapter][index] = newQuestion;
       } else {
-        // If not found in the current subject/chapter, look through all chapters
         let found = false;
         for (const subj in storedQB) {
           for (const chap in storedQB[subj]) {
             const idx = storedQB[subj][chap].findIndex(q => q.id === newQuestion.id);
             if (idx >= 0) {
-              // Remove from old location
               storedQB[subj][chap].splice(idx, 1);
               found = true;
               break;
@@ -222,24 +217,20 @@ const TestAssignment = () => {
           }
           if (found) break;
         }
-        // Add to new location
         storedQB[subject][chapter].push(newQuestion);
       }
     } else {
-      // Just add new question
       storedQB[subject][chapter].push(newQuestion);
     }
     
     localStorage.setItem('questionBank', JSON.stringify(storedQB));
 
-    // Update merged question bank
     setMergedQuestionBank(prev => {
       const updated = { ...prev };
       if (!updated[subject]) updated[subject] = {};
       if (!updated[subject][chapter]) updated[subject][chapter] = [];
       
       if (editingQuestion) {
-        // Remove the old question from its previous location if it moved
         if (editingQuestion.subject !== subject || editingQuestion.chapter !== chapter) {
           const oldSubject = editingQuestion.subject || selectedSubject;
           const oldChapter = editingQuestion.chapter || selectedChapter;
@@ -251,7 +242,6 @@ const TestAssignment = () => {
           }
         }
         
-        // Update or add the edited question in its new location
         const existingIndex = updated[subject][chapter].findIndex(q => q.id === newQuestion.id);
         if (existingIndex >= 0) {
           updated[subject][chapter][existingIndex] = newQuestion;
@@ -259,21 +249,18 @@ const TestAssignment = () => {
           updated[subject][chapter].push(newQuestion);
         }
       } else {
-        // Just add new question
         updated[subject][chapter].push(newQuestion);
       }
       
       return updated;
     });
     
-    // Update selected questions if the edited question was selected
     if (editingQuestion) {
       setSelectedQuestions(prev => 
         prev.map(q => q.id === editingQuestion.id ? newQuestion : q)
       );
     }
 
-    // Reset form and update UI
     setCustomQuestion({
       question: '',
       questionImage: null,
@@ -310,11 +297,9 @@ const TestAssignment = () => {
       chapter: question.chapter || selectedChapter
     });
     
-    // Update the subject and chapter selects
     setSelectedSubject(question.subject || selectedSubject);
     setSelectedChapter(question.chapter || selectedChapter);
     
-    // Scroll to the top of the page where the edit form is displayed
     window.scrollTo({
       top: 580,
       behavior: 'smooth'
@@ -720,8 +705,14 @@ const TestAssignment = () => {
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex flex-wrap justify-between items-center mb-4">
             <h3 className="text-lg font-bold">Selected Questions ({selectedQuestions.length})</h3>
-            <div className="text-right">
+            <div className="flex items-center gap-4">
               <p className="text-lg font-semibold">Total Marks: {testDetails.totalMarks}</p>
+              {/* <button
+                onClick={() => setIsAddingCustomQuestion(true)}
+                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+              >
+                Add Question
+              </button> */}
             </div>
           </div>
 
@@ -749,9 +740,9 @@ const TestAssignment = () => {
                       e.stopPropagation();
                       setSelectedQuestions(prev => prev.filter(q => q.id !== question.id));
                     }}
-                    className="text-red-500 hover:text-red-700"
+                    className="text-red-600 hover:text-red-800"
                   >
-                    ✕
+                    Delete
                   </button>
                 </div>
               </div>
