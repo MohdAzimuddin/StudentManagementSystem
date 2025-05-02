@@ -1,4 +1,3 @@
-// src/pages/teacher/TestAssignment.jsx
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { questionBank as staticQuestionBank } from '../../data/QuestionBank';
@@ -183,6 +182,7 @@ const TestAssignment = () => {
     const subject = customQuestion.subject;
     const chapter = customQuestion.chapter;
 
+    // Create new question object
     const newQuestion = {
       id: editingQuestion ? editingQuestion.id : `custom-${Date.now()}`,
       question: customQuestion.question,
@@ -202,12 +202,34 @@ const TestAssignment = () => {
     if (!storedQB[subject]) storedQB[subject] = {};
     if (!storedQB[subject][chapter]) storedQB[subject][chapter] = [];
     
-    const index = storedQB[subject][chapter].findIndex(q => q.id === newQuestion.id);
-    if (index >= 0) {
-      storedQB[subject][chapter][index] = newQuestion;
+    if (editingQuestion) {
+      // Find and replace the question in local storage
+      const index = storedQB[subject][chapter].findIndex(q => q.id === newQuestion.id);
+      if (index >= 0) {
+        storedQB[subject][chapter][index] = newQuestion;
+      } else {
+        // If not found in the current subject/chapter, look through all chapters
+        let found = false;
+        for (const subj in storedQB) {
+          for (const chap in storedQB[subj]) {
+            const idx = storedQB[subj][chap].findIndex(q => q.id === newQuestion.id);
+            if (idx >= 0) {
+              // Remove from old location
+              storedQB[subj][chap].splice(idx, 1);
+              found = true;
+              break;
+            }
+          }
+          if (found) break;
+        }
+        // Add to new location
+        storedQB[subject][chapter].push(newQuestion);
+      }
     } else {
+      // Just add new question
       storedQB[subject][chapter].push(newQuestion);
     }
+    
     localStorage.setItem('questionBank', JSON.stringify(storedQB));
 
     // Update merged question bank
@@ -215,14 +237,41 @@ const TestAssignment = () => {
       const updated = { ...prev };
       if (!updated[subject]) updated[subject] = {};
       if (!updated[subject][chapter]) updated[subject][chapter] = [];
-      const existingIndex = updated[subject][chapter].findIndex(q => q.id === newQuestion.id);
-      if (existingIndex >= 0) {
-        updated[subject][chapter][existingIndex] = newQuestion;
+      
+      if (editingQuestion) {
+        // Remove the old question from its previous location if it moved
+        if (editingQuestion.subject !== subject || editingQuestion.chapter !== chapter) {
+          const oldSubject = editingQuestion.subject || selectedSubject;
+          const oldChapter = editingQuestion.chapter || selectedChapter;
+          
+          if (updated[oldSubject] && updated[oldSubject][oldChapter]) {
+            updated[oldSubject][oldChapter] = updated[oldSubject][oldChapter].filter(
+              q => q.id !== editingQuestion.id
+            );
+          }
+        }
+        
+        // Update or add the edited question in its new location
+        const existingIndex = updated[subject][chapter].findIndex(q => q.id === newQuestion.id);
+        if (existingIndex >= 0) {
+          updated[subject][chapter][existingIndex] = newQuestion;
+        } else {
+          updated[subject][chapter].push(newQuestion);
+        }
       } else {
+        // Just add new question
         updated[subject][chapter].push(newQuestion);
       }
+      
       return updated;
     });
+    
+    // Update selected questions if the edited question was selected
+    if (editingQuestion) {
+      setSelectedQuestions(prev => 
+        prev.map(q => q.id === editingQuestion.id ? newQuestion : q)
+      );
+    }
 
     // Reset form and update UI
     setCustomQuestion({
@@ -262,8 +311,14 @@ const TestAssignment = () => {
     });
     
     // Update the subject and chapter selects
-    setSelectedSubject(question.subject);
-    setSelectedChapter(question.chapter);
+    setSelectedSubject(question.subject || selectedSubject);
+    setSelectedChapter(question.chapter || selectedChapter);
+    
+    // Scroll to the top of the page where the edit form is displayed
+    window.scrollTo({
+      top: 580,
+      behavior: 'smooth'
+    });
   };
 
   const handleAssignTest = () => {
@@ -423,7 +478,7 @@ const TestAssignment = () => {
               </h3>
               <button
                 onClick={() => { setIsAddingCustomQuestion(false); setEditingQuestion(null); }}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-gray-200 p-2 rounded-md hover:text-gray-700 bg-red-500 active:bg-red-100"
               >
                 Cancel
               </button>
@@ -716,12 +771,3 @@ const TestAssignment = () => {
 };
 
 export default TestAssignment;
-
-
-
-
-
-
-
-
-
