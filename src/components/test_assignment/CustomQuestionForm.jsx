@@ -1,3 +1,4 @@
+// CustomQuestionForm.jsx
 import { useRef, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 
@@ -69,6 +70,16 @@ const CustomQuestionForm = ({
     if (optionImageInputRefs[index].current) optionImageInputRefs[index].current.value = "";
   };
 
+  const handleSave = () => {
+    saveCustomQuestion();
+    setEditingQuestion(null);
+  };
+
+  const handleCancel = () => {
+    setIsAddingCustomQuestion(false);
+    setEditingQuestion(null);
+  };
+
   return (
     <div className="bg-white rounded-lg shadow p-6 mb-6">
       <div className="flex justify-between mb-4">
@@ -76,7 +87,7 @@ const CustomQuestionForm = ({
           {editingQuestion ? 'Edit Question' : 'New Custom Question'}
         </h3>
         <button
-          onClick={() => { setIsAddingCustomQuestion(false); setEditingQuestion(null); }}
+          onClick={handleCancel}
           className="text-red-500 hover:text-red-700 font-medium px-3 py-1 rounded"
         >
           Cancel
@@ -149,11 +160,13 @@ const CustomQuestionForm = ({
             )}
           </div>
           {customQuestion.questionImagePreview && (
-            <img
-              src={customQuestion.questionImagePreview}
-              alt="Preview"
-              className="mt-2 max-h-40 rounded"
-            />
+            <div className="mt-2 flex justify-center">
+              <img
+                src={customQuestion.questionImagePreview}
+                alt="Preview"
+                className="max-w-full h-auto max-h-40 rounded object-contain"
+              />
+            </div>
           )}
         </div>
       </div>
@@ -199,11 +212,13 @@ const CustomQuestionForm = ({
               )}
             </div>
             {customQuestion.optionImagePreviews[index] && (
-              <img
-                src={customQuestion.optionImagePreviews[index]}
-                alt={`Option ${index + 1}`}
-                className="mt-2 max-h-20 rounded"
-              />
+              <div className="mt-2 flex justify-center">
+                <img
+                  src={customQuestion.optionImagePreviews[index]}
+                  alt={`Option ${index + 1}`}
+                  className="max-w-full h-auto max-h-20 rounded object-contain"
+                />
+              </div>
             )}
           </div>
         ))}
@@ -221,7 +236,7 @@ const CustomQuestionForm = ({
       </div>
 
       <button
-        onClick={saveCustomQuestion}
+        onClick={handleSave}
         className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
       >
         {editingQuestion ? 'Update Question' : 'Add Question'}
