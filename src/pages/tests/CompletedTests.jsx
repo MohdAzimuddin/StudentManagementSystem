@@ -150,7 +150,7 @@ const CompletedTests = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Completed Tests</h1>
         <Link 
-          to="/tests"
+          to="/assigned-tests"
           className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
         >
           View Available Tests
@@ -246,7 +246,7 @@ const CompletedTests = () => {
             Tests you complete will appear here for reference.
           </p>
           <Link 
-            to="/tests" 
+            to="/assigned-tests" 
             className="inline-block mt-4 bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
           >
             View Available Tests

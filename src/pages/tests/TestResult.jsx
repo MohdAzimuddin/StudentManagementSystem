@@ -1,4 +1,4 @@
-// src/pages/tests/TestResult.jsx
+// TestResult.jsx
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../Context/AuthContext';
@@ -18,7 +18,6 @@ const TestResult = () => {
           throw new Error('User not authenticated');
         }
 
-        // Fetch test details
         const storedTests = localStorage.getItem('assignedTests');
         if (!storedTests) {
           throw new Error('No tests found');
@@ -33,11 +32,9 @@ const TestResult = () => {
         
         setTest(currentTest);
         
-        // Fetch student's result for this test
         if (currentTest.results && currentTest.results[user.email]) {
           setResult(currentTest.results[user.email]);
         } else {
-          // Check completed tests as fallback
           const completedTests = JSON.parse(localStorage.getItem('completedTests') || '[]');
           const completedTest = completedTests.find(
             ct => ct.testId === testId && ct.studentEmail === user.email
@@ -62,70 +59,69 @@ const TestResult = () => {
     }
   }, [testId, user, navigate]);
 
-  // Helper function to render question content with possible images
   const renderQuestionContent = (question) => {
     if (!question) return null;
     
-    // Check if question is an object with text and image properties
     if (typeof question === 'object' && question.text) {
       return (
         <>
-          <span>{question.text}</span>
+          <span className="whitespace-pre-wrap break-words">{question.text}</span>
           {question.image && (
-            <img 
-              src={question.image} 
-              alt="Question illustration" 
-              className="mt-2 max-h-40 rounded" 
-            />
+            <div className="mt-2 flex justify-center">
+              <img 
+                src={question.image} 
+                alt="Question illustration" 
+                className="max-w-full h-auto max-h-32 rounded object-contain" 
+              />
+            </div>
           )}
         </>
       );
     }
     
-    // Render as simple text with possible image from questionImage property
     return (
       <>
-        <span>{question}</span>
+        <span className="whitespace-pre-wrap break-words">{question}</span>
       </>
     );
   };
 
-  // Helper function to render option content with possible images
   const renderOptionContent = (option, optionImage) => {
     if (!option) return null;
     
-    // Check if option is an object with text and image properties
     if (typeof option === 'object' && option.text) {
       return (
         <>
-          <span>{option.text}</span>
+          <span className="whitespace-pre-wrap break-words">{option.text}</span>
           {option.image && (
-            <img 
-              src={option.image} 
-              alt="Option visual" 
-              className="mt-2 max-h-24 rounded block" 
-            />
+            <div className="mt-2 flex justify-center">
+              <img 
+                src={option.image} 
+                alt="Option visual" 
+                className="max-w-full h-auto max-h-20 rounded" 
+              />
+            </div>
           )}
         </>
       );
     }
     
-    // Render as simple text with possible image from optionImages array
     return (
       <>
-        <span>{option}</span>
+        <span className="whitespace-pre-wrap break-words">{option}</span>
         {optionImage && (
-          <img 
-            src={optionImage} 
-            alt="Option visual" 
-            className="mt-2 max-h-24 rounded block" 
-          />
+          <div className="mt-2 flex justify-center">
+            <img 
+              src={optionImage} 
+              alt="Option visual" 
+              className="max-w-full h-auto max-h-20 rounded object-contain" 
+            />
+          </div>
         )}
       </>
     );
   };
 
-  // Loading state
   if (loading) {
     return (
       <div className="p-6 max-w-4xl mx-auto">
@@ -137,7 +133,6 @@ const TestResult = () => {
     );
   }
   
-  // Error state
   if (!test || !result) {
     return (
       <div className="p-6 max-w-4xl mx-auto">
@@ -158,18 +153,17 @@ const TestResult = () => {
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <div className="p-4 md:p-6 max-w-4xl mx-auto">
       <h1 className="text-2xl font-bold mb-6">Test Result</h1>
       
-      {/* Result Summary Card */}
       <div className="bg-white rounded-lg shadow mb-6">
-        <div className="p-6 border-b">
-          <h2 className="text-xl font-bold mb-2">{test.title}</h2>
+        <div className="p-4 md:p-6 border-b">
+          <h2 className="text-xl font-bold mb-2 break-words">{test.title}</h2>
           <p className="text-gray-600">Subject: {test.subject}</p>
           <p className="text-gray-600">Submitted: {new Date(result.submittedAt).toLocaleString()}</p>
         </div>
         
-        <div className="p-6">
+        <div className="p-4 md:p-6">
           <div className="flex justify-between items-center mb-6">
             <div>
               <p className="text-lg font-medium">Your Score</p>
@@ -191,7 +185,6 @@ const TestResult = () => {
             </div>
           </div>
           
-          {/* Visual score indicator */}
           <div className="w-full bg-gray-200 rounded-full h-4 mb-4">
             <div 
               className={`h-4 rounded-full ${
@@ -205,27 +198,23 @@ const TestResult = () => {
         </div>
       </div>
       
-      {/* Answer Review Section - Only if we have answers data */}
       {result.answers && test.questions && (
         <div className="bg-white rounded-lg shadow mb-6">
-          <div className="p-6 border-b">
+          <div className="p-4 md:p-6 border-b">
             <h3 className="text-lg font-bold">Your Answers</h3>
           </div>
           
-          <div className="p-6">
+          <div className="p-4 md:p-6">
             <div className="space-y-6">
               {test.questions.map((question, index) => {
                 const userAnswer = result.answers[question.id];
-                // Handle different question formats to determine if answer is correct
                 let isCorrect = false;
                 
                 if (typeof question.correctAnswer === 'object' && question.correctAnswer.text) {
                   isCorrect = userAnswer === question.correctAnswer.text;
                 } else if (question.correctAnswerIndex !== undefined) {
-                  // Check if correct by the index
                   isCorrect = userAnswer === question.options[question.correctAnswerIndex];
                 } else {
-                  // Default comparison
                   isCorrect = userAnswer === question.correctAnswer;
                 }
                 
@@ -236,16 +225,18 @@ const TestResult = () => {
                       isCorrect ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
                     }`}
                   >
-                    <div className="flex justify-between flex-wrap">
-                      <div className="font-medium mb-2 max-w-xl">
+                    <div className="flex flex-col md:flex-row justify-between flex-wrap gap-2">
+                      <div className="font-medium mb-2 max-w-xl break-words">
                         <span className="mr-2">Q{index + 1}:</span>
                         {renderQuestionContent(question.question)}
                         {question.questionImage && (
-                          <img 
-                            src={question.questionImage} 
-                            alt="Question illustration" 
-                            className="mt-2 max-h-40 rounded" 
-                          />
+                          <div className="mt-2 flex justify-center">
+                            <img 
+                              src={question.questionImage} 
+                              alt="Question illustration" 
+                              className="max-w-full h-auto max-h-32 rounded object-contain" 
+                            />
+                          </div>
                         )}
                       </div>
                       
@@ -260,7 +251,6 @@ const TestResult = () => {
                     
                     <div className="mt-3 space-y-2">
                       {question.options.map((option, optIndex) => {
-                        // Determine if this option is correct
                         let isCorrectOption = false;
                         if (question.correctAnswerIndex !== undefined) {
                           isCorrectOption = optIndex === question.correctAnswerIndex;
@@ -268,7 +258,6 @@ const TestResult = () => {
                           isCorrectOption = option === question.correctAnswer;
                         }
                         
-                        // Determine if this was the user's choice
                         let isUserChoice = false;
                         if (typeof option === 'object' && option.text) {
                           isUserChoice = userAnswer === option.text;
@@ -291,7 +280,7 @@ const TestResult = () => {
                               <span className="mr-2 font-bold">
                                 {String.fromCharCode(65 + optIndex)}.
                               </span>
-                              <div className="flex-1">
+                              <div className="flex-1 break-words">
                                 {renderOptionContent(
                                   option, 
                                   question.optionImages && question.optionImages[optIndex]
@@ -321,7 +310,6 @@ const TestResult = () => {
         </div>
       )}
       
-      {/* Actions */}
       <div className="flex justify-center">
         <Link 
           to="/assigned-tests" 

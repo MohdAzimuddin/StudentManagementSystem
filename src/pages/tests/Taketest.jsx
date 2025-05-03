@@ -1,4 +1,4 @@
-// src/pages/tests/TakeTest.jsx
+// TakeTest.jsx
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
@@ -14,14 +14,13 @@ const TakeTest = () => {
   const [timeLeft, setTimeLeft] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Fetch test data
   useEffect(() => {
     const fetchTest = () => {
       try {
         const storedTests = localStorage.getItem('assignedTests');
         if (!storedTests) {
           toast.error('No tests found');
-          navigate('/tests');
+          navigate('/assigned-tests');
           return;
         }
         
@@ -30,22 +29,20 @@ const TakeTest = () => {
         
         if (!currentTest) {
           toast.error('Test not found');
-          navigate('/tests');
+          navigate('/assigned-tests');
           return;
         }
         
-        // Check if the student has already completed this test
         const completedTests = JSON.parse(localStorage.getItem('completedTests') || '[]');
         if (user && completedTests.some(ct => ct.testId === testId && ct.studentEmail === user.email)) {
           toast.error('You have already completed this test');
-          navigate('/tests');
+          navigate('/completed-tests');
           return;
         }
         
         setTest(currentTest);
-        setTimeLeft(currentTest.duration * 60); // Convert minutes to seconds
+        setTimeLeft(currentTest.duration * 60);
         
-        // Initialize answers object with empty selections
         const initialAnswers = {};
         currentTest.questions.forEach(q => {
           initialAnswers[q.id] = null;
@@ -65,7 +62,6 @@ const TakeTest = () => {
     }
   }, [testId, navigate, user]);
   
-  // Timer functionality
   useEffect(() => {
     if (!test || timeLeft <= 0) return;
     
@@ -83,14 +79,12 @@ const TakeTest = () => {
     return () => clearInterval(timer);
   }, [test, timeLeft]);
   
-  // Format time as MM:SS
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
   
-  // Handle answer selection
   const handleAnswerSelect = (questionId, optionIndex) => {
     setAnswers({
       ...answers,
@@ -98,7 +92,6 @@ const TakeTest = () => {
     });
   };
   
-  // Calculate score
   const calculateScore = () => {
     if (!test) return 0;
     
@@ -112,13 +105,11 @@ const TakeTest = () => {
     return score;
   };
   
-  // Handle time up
   const handleTimeUp = () => {
     toast.error("Time's up! Submitting your answers...");
     handleSubmitTest();
   };
   
-  // Submit test
   const handleSubmitTest = async () => {
     if (isSubmitting) return;
     
@@ -146,20 +137,17 @@ const TakeTest = () => {
         timeRemaining: timeLeft
       };
       
-      // 1. Save to test results
       const storedTests = localStorage.getItem('assignedTests');
       if (storedTests) {
         const allTests = JSON.parse(storedTests);
         const testIndex = allTests.findIndex(t => t.id === testId);
         
         if (testIndex !== -1) {
-          // Add result to the test
           if (!allTests[testIndex].results) {
             allTests[testIndex].results = {};
           }
           allTests[testIndex].results[user.email] = testResult;
           
-          // Add notification for teacher
           if (!allTests[testIndex].notifications) {
             allTests[testIndex].notifications = [];
           }
@@ -172,13 +160,10 @@ const TakeTest = () => {
           });
           
           localStorage.setItem('assignedTests', JSON.stringify(allTests));
-          
-          // Trigger update event for other tabs
           window.dispatchEvent(new Event('assignedTestsUpdated'));
         }
       }
       
-      // 2. Save to completed tests for this student
       const completedTests = JSON.parse(localStorage.getItem('completedTests') || '[]');
       completedTests.push({
         testId: test.id,
@@ -203,7 +188,6 @@ const TakeTest = () => {
     }
   };
   
-  // Confirm before leaving page
   useEffect(() => {
     const handleBeforeUnload = (e) => {
       if (!isSubmitting && test) {
@@ -217,18 +201,17 @@ const TakeTest = () => {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [test, isSubmitting]);
   
-  // Render question content properly (text and/or image)
   const renderQuestionContent = (question) => {
     if (typeof question === 'object') {
       return (
         <>
-          <div className="whitespace-pre-wrap">{question.text}</div>
+          <div className="whitespace-pre-wrap break-words w-full">{question.text}</div>
           {question.image && (
-            <div className="mt-2">
+            <div className="mt-2 flex justify-start">
               <img
                 src={question.image}
                 alt="Question illustration"
-                className="max-h-48 rounded"
+                className="max-w-full h-auto max-h-32 rounded object-contain"
               />
             </div>
           )}
@@ -237,13 +220,13 @@ const TakeTest = () => {
     }
     return (
       <>
-        <div className="whitespace-pre-wrap">{question}</div>
+        <div className="whitespace-pre-wrap break-words w-full">{question}</div>
         {typeof question === 'string' && test.questions.find(q => q.question === question)?.questionImage && (
-          <div className="mt-2">
+          <div className="mt-2 flex justify-start">
             <img
               src={test.questions.find(q => q.question === question).questionImage}
               alt="Question illustration"
-              className="max-h-48 rounded"
+              className="max-w-full h-auto max-h-32 rounded object-contain"
             />
           </div>
         )}
@@ -251,18 +234,17 @@ const TakeTest = () => {
     );
   };
 
-  // Render option content properly (text and/or image)
   const renderOptionContent = (option, optionImage) => {
     if (typeof option === 'object') {
       return (
         <>
-          <div className="whitespace-pre-wrap">{option.text}</div>
+          <div className="whitespace-pre-wrap break-words w-full">{option.text}</div>
           {option.image && (
-            <div className="mt-1">
+            <div className="mt-1 flex justify-start">
               <img
                 src={option.image}
                 alt="Option visual"
-                className="max-h-32 rounded"
+                className="max-w-full h-auto max-h-20 rounded object-contain"
               />
             </div>
           )}
@@ -271,13 +253,13 @@ const TakeTest = () => {
     }
     return (
       <>
-        <div className="whitespace-pre-wrap">{option}</div>
+        <div className="whitespace-pre-wrap break-words w-full">{option}</div>
         {optionImage && (
-          <div className="mt-1">
+          <div className="mt-1 flex justify-start">
             <img
               src={optionImage}
               alt="Option visual"
-              className="max-h-32 rounded"
+              className="max-w-full h-auto max-h-20 rounded object-contain"
             />
           </div>
         )}
@@ -285,10 +267,9 @@ const TakeTest = () => {
     );
   };
 
-  // Loading state
   if (loading) {
     return (
-      <div className="p-6 max-w-4xl mx-auto">
+      <div className="p-6 w-full max-w-4xl mx-auto">
         <h1 className="text-2xl font-bold mb-6">Loading Test...</h1>
         <div className="bg-white p-6 rounded-lg shadow">
           <p className="text-center">Please wait while we load your test...</p>
@@ -297,10 +278,9 @@ const TakeTest = () => {
     );
   }
   
-  // Test not found state
   if (!test) {
     return (
-      <div className="p-6 max-w-4xl mx-auto">
+      <div className="p-6 w-full max-w-4xl mx-auto">
         <h1 className="text-2xl font-bold mb-6">Test Not Found</h1>
         <div className="bg-white p-6 rounded-lg shadow">
           <p className="text-center">This test could not be found or has been removed.</p>
@@ -318,12 +298,11 @@ const TakeTest = () => {
   }
   
   return (
-    <div className="p-6 max-w-4xl mx-auto mb-12">
-      {/* Test Header */}
+    <div className="p-4 md:p-6 w-full max-w-4xl mx-auto mb-12">
       <div className="bg-white rounded-lg shadow p-4 mb-6 sticky top-0 z-10">
-        <div className="flex justify-between items-center">
-          <h1 className="text-xl font-bold">{test.title}</h1>
-          <div className="text-right">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
+          <h1 className="text-xl font-bold break-words w-full md:w-auto">{test.title}</h1>
+          <div className="text-right w-full md:w-auto">
             <div className={`text-lg font-mono ${timeLeft < 300 ? 'text-red-600 font-bold' : ''}`}>
               Time: {formatTime(timeLeft)}
             </div>
@@ -334,10 +313,8 @@ const TakeTest = () => {
         </div>
       </div>
       
-      {/* Questions */}
-      <div className="space-y-6">
+      <div className="space-y-6 w-full">
         {test.questions.map((question, index) => {
-          // Get the question content and image based on the question structure
           const questionContent = typeof question.question === 'object' 
             ? question.question.text 
             : question.question;
@@ -346,28 +323,32 @@ const TakeTest = () => {
             : question.questionImage;
 
           return (
-            <div key={question.id} className="bg-white rounded-lg shadow p-6">
-              <div className="flex justify-between">
-                <h3 className="text-lg font-medium mb-4">
-                  Q{index + 1}: <div className="whitespace-pre-wrap">{questionContent}</div>
-                  {questionImage && (
-                    <div className="mt-2">
-                      <img
-                        src={questionImage}
-                        alt="Question illustration"
-                        className="max-h-48 rounded"
-                      />
+            <div key={question.id} className="bg-white rounded-lg shadow p-4 md:p-6 w-full">
+              <div className="flex flex-col md:flex-row justify-between gap-2 w-full">
+                <div className="flex-1 min-w-0"> {/* Added min-w-0 to prevent flex item overflow */}
+                  <h3 className="text-lg font-medium mb-2 md:mb-4 w-full">
+                    <span className="inline-block">Q{index + 1}:</span>{' '}
+                    <div className="whitespace-pre-wrap break-words inline-block w-full">
+                      {questionContent}
                     </div>
-                  )}
-                </h3>
-                <span className="text-sm text-gray-600 whitespace-nowrap ml-2">
+                    {questionImage && (
+                      <div className="mt-2 flex justify-start w-full">
+                        <img
+                          src={questionImage}
+                          alt="Question illustration"
+                          className="max-w-full h-auto max-h-32 rounded object-contain"
+                        />
+                      </div>
+                    )}
+                  </h3>
+                </div>
+                <span className="text-sm text-gray-600 whitespace-nowrap md:ml-2 self-start md:self-center">
                   [{question.marks} marks]
                 </span>
               </div>
               
-              <div className="space-y-3 mt-4">
+              <div className="space-y-3 mt-4 w-full">
                 {question.options.map((option, optIndex) => {
-                  // Get the option text and image based on whether it's an object or string
                   const optionText = typeof option === 'object' ? option.text : option;
                   const optionImage = typeof option === 'object' 
                     ? option.image 
@@ -376,19 +357,19 @@ const TakeTest = () => {
                   return (
                     <div
                       key={optIndex}
-                      className={`border rounded p-3 cursor-pointer transition-colors ${
+                      className={`border rounded p-3 cursor-pointer transition-colors w-full ${
                         answers[question.id] === optIndex
                           ? 'bg-blue-100 border-blue-400'
                           : 'hover:bg-gray-50'
                       }`}
                       onClick={() => handleAnswerSelect(question.id, optIndex)}
                     >
-                      <div className="flex items-start">
-                        <span className="mr-2 font-bold mt-1">
+                      <div className="flex items-start w-full">
+                        <span className="mr-2 font-bold mt-1 min-w-[20px]"> {/* Added min-width to prevent shifting */}
                           {String.fromCharCode(65 + optIndex)}.
                         </span>
-                        <div className="flex-1">
-                          {renderOptionContent(optionText, optionImage)}
+                        <div className="flex-1 break-words min-w-0"> {/* Added min-w-0 */}
+                          {renderOptionContent(option, optionImage)}
                         </div>
                       </div>
                     </div>
@@ -400,10 +381,9 @@ const TakeTest = () => {
         })}
       </div>
       
-      {/* Submit Button */}
       <div className="fixed bottom-0 left-0 right-0 bg-white p-4 shadow-md">
-        <div className="max-w-4xl mx-auto flex justify-between items-center">
-          <div>
+        <div className="w-full max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center gap-2">
+          <div className="w-full md:w-auto">
             <p className="text-sm text-gray-600">
               {Object.values(answers).filter(a => a !== null).length} of {test.questions.length} questions answered
             </p>
@@ -411,7 +391,7 @@ const TakeTest = () => {
           <button
             onClick={handleSubmitTest}
             disabled={isSubmitting}
-            className={`bg-blue-600 text-white py-2 px-8 rounded-lg hover:bg-blue-700 transition-colors ${
+            className={`bg-blue-600 text-white py-2 px-8 rounded-lg hover:bg-blue-700 transition-colors w-full md:w-auto ${
               isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
             }`}
           >
