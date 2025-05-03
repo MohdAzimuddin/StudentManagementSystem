@@ -46,9 +46,12 @@ const TestAssignment = () => {
       for (const subject in customQB) {
         if (!merged[subject]) merged[subject] = {};
         for (const chapter in customQB[subject]) {
+          if (!merged[subject][chapter]) merged[subject][chapter] = [];
+          const existingIds = new Set(merged[subject][chapter].map(q => q.id));
+          const filteredCustom = customQB[subject][chapter].filter(q => !existingIds.has(q.id));
           merged[subject][chapter] = [
-            ...(merged[subject][chapter] || []),
-            ...customQB[subject][chapter]
+            ...merged[subject][chapter],
+            ...filteredCustom
           ];
         }
       }
@@ -119,71 +122,62 @@ const TestAssignment = () => {
       isCustom: true
     };
 
+    // Get current localStorage state
     const storedQB = JSON.parse(localStorage.getItem('questionBank') || '{}');
-    if (!storedQB[subject]) storedQB[subject] = {};
-    if (!storedQB[subject][chapter]) storedQB[subject][chapter] = [];
     
+    // First, remove the question if it's being edited
     if (editingQuestion) {
-      const index = storedQB[subject][chapter].findIndex(q => q.id === newQuestion.id);
-      if (index >= 0) {
-        storedQB[subject][chapter][index] = newQuestion;
-      } else {
-        let found = false;
-        for (const subj in storedQB) {
-          for (const chap in storedQB[subj]) {
-            const idx = storedQB[subj][chap].findIndex(q => q.id === newQuestion.id);
-            if (idx >= 0) {
-              storedQB[subj][chap].splice(idx, 1);
-              found = true;
-              break;
-            }
-          }
-          if (found) break;
+      // Search all subjects and chapters in localStorage
+      for (const subj in storedQB) {
+        for (const chap in storedQB[subj]) {
+          storedQB[subj][chap] = storedQB[subj][chap].filter(q => q.id !== editingQuestion.id);
         }
-        storedQB[subject][chapter].push(newQuestion);
       }
-    } else {
-      storedQB[subject][chapter].push(newQuestion);
     }
     
+    // Then add the question to the new location
+    if (!storedQB[subject]) storedQB[subject] = {};
+    if (!storedQB[subject][chapter]) storedQB[subject][chapter] = [];
+    storedQB[subject][chapter].push(newQuestion);
+    
+    // Save back to localStorage
     localStorage.setItem('questionBank', JSON.stringify(storedQB));
 
+    // Now update our state
     setMergedQuestionBank(prev => {
       const updated = { ...prev };
-      if (!updated[subject]) updated[subject] = {};
-      if (!updated[subject][chapter]) updated[subject][chapter] = [];
       
+      // First, remove the question if it's being edited
       if (editingQuestion) {
-        if (editingQuestion.subject !== subject || editingQuestion.chapter !== chapter) {
-          const oldSubject = editingQuestion.subject || selectedSubject;
-          const oldChapter = editingQuestion.chapter || selectedChapter;
-          
-          if (updated[oldSubject] && updated[oldSubject][oldChapter]) {
-            updated[oldSubject][oldChapter] = updated[oldSubject][oldChapter].filter(
-              q => q.id !== editingQuestion.id
-            );
+        for (const subj in updated) {
+          for (const chap in updated[subj]) {
+            updated[subj][chap] = updated[subj][chap].filter(q => q.id !== editingQuestion.id);
           }
         }
-        
-        const existingIndex = updated[subject][chapter].findIndex(q => q.id === newQuestion.id);
-        if (existingIndex >= 0) {
-          updated[subject][chapter][existingIndex] = newQuestion;
-        } else {
-          updated[subject][chapter].push(newQuestion);
-        }
+      }
+      
+      // Then add the question to the new location, ensuring no duplicates
+      if (!updated[subject]) updated[subject] = {};
+      if (!updated[subject][chapter]) updated[subject][chapter] = [];
+      // Check if the question already exists in the array and replace it
+      const existingIndex = updated[subject][chapter].findIndex(q => q.id === newQuestion.id);
+      if (existingIndex >= 0) {
+        updated[subject][chapter][existingIndex] = newQuestion;
       } else {
-        updated[subject][chapter].push(newQuestion);
+        updated[subject][chapter] = [...updated[subject][chapter], newQuestion];
       }
       
       return updated;
     });
     
+    // Update selectedQuestions if we were editing a selected question
     if (editingQuestion) {
       setSelectedQuestions(prev => 
         prev.map(q => q.id === editingQuestion.id ? newQuestion : q)
       );
     }
 
+    // Reset form state
     setCustomQuestion({
       question: '',
       questionImage: null,
