@@ -1,4 +1,4 @@
-// CustomQuestionForm.jsx
+// Importing necessary hooks and libraries
 import { useRef, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 
@@ -13,12 +13,14 @@ const CustomQuestionForm = ({
   subjects,
   mergedQuestionBank
 }) => {
+  // Refs for image file inputs (question + options)
   const questionImageInputRef = useRef(null);
   const optionImageInputRefs = [useRef(null), useRef(null), useRef(null), useRef(null)];
 
+  // Validate image file size and type
   const validateImageFile = (file) => {
     if (!file) return true;
-    if (file.size > 2 * 1024 * 1024) {
+    if (file.size > 2 * 1024 * 1024) { // Limit: 2MB
       toast.error(`File size exceeds 2MB: ${(file.size / (1024 * 1024)).toFixed(2)}MB`);
       return false;
     }
@@ -29,9 +31,11 @@ const CustomQuestionForm = ({
     return true;
   };
 
+  // Handle question image upload and preview
   const handleQuestionImageUpload = (e) => {
     const file = e.target.files[0];
     if (!file || !validateImageFile(file)) return;
+
     const reader = new FileReader();
     reader.onload = () => {
       handleCustomQuestionChange('questionImage', file);
@@ -40,9 +44,11 @@ const CustomQuestionForm = ({
     reader.readAsDataURL(file);
   };
 
+  // Handle option image upload and preview for a specific index
   const handleOptionImageUpload = (index, e) => {
     const file = e.target.files[0];
     if (!file || !validateImageFile(file)) return;
+
     const reader = new FileReader();
     reader.onload = () => {
       const newImages = [...customQuestion.optionImages];
@@ -55,12 +61,14 @@ const CustomQuestionForm = ({
     reader.readAsDataURL(file);
   };
 
+  // Remove uploaded question image
   const removeQuestionImage = () => {
     handleCustomQuestionChange('questionImage', null);
     handleCustomQuestionChange('questionImagePreview', null);
     if (questionImageInputRef.current) questionImageInputRef.current.value = "";
   };
 
+  // Remove uploaded option image for specific index
   const removeOptionImage = (index) => {
     const newImages = [...customQuestion.optionImages];
     const newPreviews = [...customQuestion.optionImagePreviews];
@@ -70,11 +78,13 @@ const CustomQuestionForm = ({
     if (optionImageInputRefs[index].current) optionImageInputRefs[index].current.value = "";
   };
 
+  // Save question (either create or update)
   const handleSave = () => {
     saveCustomQuestion();
     setEditingQuestion(null);
   };
 
+  // Cancel question creation/editing
   const handleCancel = () => {
     setIsAddingCustomQuestion(false);
     setEditingQuestion(null);
@@ -82,6 +92,7 @@ const CustomQuestionForm = ({
 
   return (
     <div className="bg-white rounded-lg shadow p-6 mb-6">
+      {/* Header section */}
       <div className="flex justify-between mb-4">
         <h3 className="text-lg font-bold">
           {editingQuestion ? 'Edit Question' : 'New Custom Question'}
@@ -94,6 +105,7 @@ const CustomQuestionForm = ({
         </button>
       </div>
 
+      {/* Subject and Chapter selection */}
       <div className="grid md:grid-cols-2 gap-4 mb-4">
         <div>
           <label className="block text-sm font-medium mb-1">Subject *</label>
@@ -112,6 +124,7 @@ const CustomQuestionForm = ({
             ))}
           </select>
         </div>
+
         <div>
           <label className="block text-sm font-medium mb-1">Chapter *</label>
           <select
@@ -131,6 +144,7 @@ const CustomQuestionForm = ({
         </div>
       </div>
 
+      {/* Question input and image */}
       <div className="mb-4">
         <label className="block text-sm font-medium mb-1">Question *</label>
         <textarea
@@ -139,6 +153,7 @@ const CustomQuestionForm = ({
           onChange={(e) => handleCustomQuestionChange('question', e.target.value)}
           className="border p-2 rounded w-full mb-2 whitespace-pre-wrap"
         />
+        {/* Question image upload */}
         <div className="mb-2">
           <label className="block text-sm font-medium mb-1">Question Image</label>
           <div className="flex items-center">
@@ -171,10 +186,12 @@ const CustomQuestionForm = ({
         </div>
       </div>
 
+      {/* Options with images and correct answer selector */}
       <div className="mb-4">
         <label className="block text-sm font-medium mb-2">Options *</label>
         {customQuestion.options.map((option, index) => (
           <div key={index} className="mb-4 p-3 bg-gray-50 rounded">
+            {/* Correct answer radio and option text */}
             <div className="flex items-center mb-2">
               <input
                 type="radio"
@@ -193,6 +210,7 @@ const CustomQuestionForm = ({
               onChange={(e) => handleOptionChange(index, e.target.value)}
               className="border p-2 rounded w-full mb-2"
             />
+            {/* Option image upload */}
             <div className="flex items-center">
               <input
                 type="file"
@@ -224,6 +242,7 @@ const CustomQuestionForm = ({
         ))}
       </div>
 
+      {/* Marks input */}
       <div className="mb-4">
         <label className="block text-sm font-medium mb-1">Marks *</label>
         <input
@@ -235,6 +254,7 @@ const CustomQuestionForm = ({
         />
       </div>
 
+      {/* Save/Add button */}
       <button
         onClick={handleSave}
         className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700"

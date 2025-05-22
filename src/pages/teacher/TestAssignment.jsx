@@ -8,11 +8,16 @@ import CustomQuestionForm from '../../components/test_assignment/CustomQuestionF
 import QuestionList from '../../components/test_assignment/QuestionList';
 
 const TestAssignment = () => {
+  // Authentication and navigation hooks
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  // State for subject, chapter and selected questions
   const [selectedSubject, setSelectedSubject] = useState('');
   const [selectedChapter, setSelectedChapter] = useState('');
   const [selectedQuestions, setSelectedQuestions] = useState([]);
+
+  // State for test details form
   const [testDetails, setTestDetails] = useState({
     title: '',
     dueDate: '',
@@ -22,6 +27,7 @@ const TestAssignment = () => {
     duration: 60
   });
   
+  // State for custom question form
   const [isAddingCustomQuestion, setIsAddingCustomQuestion] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState(null);
   const [mergedQuestionBank, setMergedQuestionBank] = useState(staticQuestionBank);
@@ -38,11 +44,14 @@ const TestAssignment = () => {
     chapter: ''
   });
 
+  // Effect to merge static question bank with custom questions from localStorage
   useEffect(() => {
     const storedQB = localStorage.getItem('questionBank');
     if (storedQB) {
       const customQB = JSON.parse(storedQB);
       const merged = { ...staticQuestionBank };
+      
+      // Merge custom questions with static question bank
       for (const subject in customQB) {
         if (!merged[subject]) merged[subject] = {};
         for (const chapter in customQB[subject]) {
@@ -59,15 +68,18 @@ const TestAssignment = () => {
     }
   }, []);
 
+  // Derived values for subjects, chapters and questions based on selections
   const subjects = Object.keys(mergedQuestionBank);
   const chapters = selectedSubject ? Object.keys(mergedQuestionBank[selectedSubject]) : [];
   const questions = selectedChapter ? mergedQuestionBank[selectedSubject][selectedChapter] : [];
 
+  // Effect to update total marks whenever selected questions change
   useEffect(() => {
     const total = selectedQuestions.reduce((sum, q) => sum + q.marks, 0);
     setTestDetails(prev => ({ ...prev, totalMarks: total }));
   }, [selectedQuestions]);
 
+  // Effect to update test details and custom question form when subject changes
   useEffect(() => {
     if (selectedSubject) {
       setTestDetails(prev => ({ ...prev, subject: selectedSubject }));
@@ -75,12 +87,14 @@ const TestAssignment = () => {
     }
   }, [selectedSubject]);
 
+  // Effect to update custom question form when chapter changes
   useEffect(() => {
     if (selectedChapter) {
       setCustomQuestion(prev => ({ ...prev, chapter: selectedChapter }));
     }
   }, [selectedChapter]);
 
+  // Function to validate custom question form
   const validateQuestionForm = () => {
     if (!customQuestion.subject) {
       toast.error('Please select a subject');
@@ -102,12 +116,14 @@ const TestAssignment = () => {
     return true;
   };
 
+  // Function to save custom question to localStorage and state
   const saveCustomQuestion = () => {
     if (!validateQuestionForm()) return;
 
     const subject = customQuestion.subject;
     const chapter = customQuestion.chapter;
 
+    // Create new question object
     const newQuestion = {
       id: editingQuestion ? editingQuestion.id : `custom-${Date.now()}`,
       question: customQuestion.question,
@@ -143,7 +159,7 @@ const TestAssignment = () => {
     // Save back to localStorage
     localStorage.setItem('questionBank', JSON.stringify(storedQB));
 
-    // Now update our state
+    // Update state with the merged question bank
     setMergedQuestionBank(prev => {
       const updated = { ...prev };
       
@@ -191,6 +207,7 @@ const TestAssignment = () => {
       chapter: chapter
     });
     
+    // Reset editing state
     setIsAddingCustomQuestion(false);
     setEditingQuestion(null);
     setSelectedSubject(subject);
@@ -199,10 +216,12 @@ const TestAssignment = () => {
     toast.success(editingQuestion ? 'Question updated!' : 'Question added!');
   };
 
+  // Function to start editing an existing question
   const startEditingQuestion = (question) => {
     setEditingQuestion(question);
     setIsAddingCustomQuestion(true);
     
+    // Populate form with question data
     setCustomQuestion({
       question: question.question || '',
       questionImage: null,
@@ -216,16 +235,20 @@ const TestAssignment = () => {
       chapter: question.chapter || selectedChapter
     });
     
+    // Update subject/chapter selections
     setSelectedSubject(question.subject || selectedSubject);
     setSelectedChapter(question.chapter || selectedChapter);
     
+    // Scroll to the form
     window.scrollTo({
       top: 580,
       behavior: 'smooth'
     });
   };
 
+  // Function to assign the test
   const handleAssignTest = () => {
+    // Validate form inputs
     if (!testDetails.title.trim()) {
       toast.error('Please enter a test title');
       return;
@@ -241,6 +264,7 @@ const TestAssignment = () => {
       return;
     }
 
+    // Create new test object
     const newTest = {
       ...testDetails,
       subject: selectedSubject,
@@ -256,6 +280,7 @@ const TestAssignment = () => {
       results: {}
     };
 
+    // Save to localStorage and notify other components
     const storedTests = JSON.parse(localStorage.getItem('assignedTests') || '[]');
     localStorage.setItem('assignedTests', JSON.stringify([...storedTests, newTest]));
     localStorage.setItem('lastAssignedTestUpdate', Date.now().toString());
@@ -264,10 +289,12 @@ const TestAssignment = () => {
     navigate('/teacher/dashboard');
   };
 
+  // Handler for custom question form changes
   const handleCustomQuestionChange = (field, value) => {
     setCustomQuestion(prev => ({ ...prev, [field]: value }));
   };
 
+  // Handler for option changes in custom question form
   const handleOptionChange = (index, value) => {
     setCustomQuestion(prev => {
       const newOptions = [...prev.options];
@@ -280,6 +307,7 @@ const TestAssignment = () => {
     <div className="p-4 md:p-6 max-w-4xl mx-auto">
       <h2 className="text-2xl font-bold mb-6">Create New Test</h2>
 
+      {/* Test details form component */}
       <TestDetailsForm 
         testDetails={testDetails}
         setTestDetails={setTestDetails}
@@ -293,6 +321,7 @@ const TestAssignment = () => {
 
       <div className="mb-6">
         {!isAddingCustomQuestion ? (
+          // Button to show custom question form
           <button
             onClick={() => setIsAddingCustomQuestion(true)}
             className="w-full bg-green-600 text-white p-2 rounded hover:bg-green-700"
@@ -300,6 +329,7 @@ const TestAssignment = () => {
             + Add Custom Question
           </button>
         ) : (
+          // Custom question form component
           <CustomQuestionForm
             customQuestion={customQuestion}
             handleCustomQuestionChange={handleCustomQuestionChange}
@@ -314,6 +344,7 @@ const TestAssignment = () => {
         )}
       </div>
 
+      {/* Question list component (shown when questions exist and not adding custom question) */}
       {questions.length > 0 && !isAddingCustomQuestion && (
         <QuestionList
           questions={questions}

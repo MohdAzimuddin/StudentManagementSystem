@@ -11,6 +11,8 @@ const QuestionList = ({
   testDetails,
   handleAssignTest
 }) => {
+
+  // Renders the content of a question, including image if present
   const renderQuestionContent = (question) => {
     if (typeof question === 'object') {
       return (
@@ -28,9 +30,10 @@ const QuestionList = ({
         </>
       );
     }
-    return question;
+    return question; // Fallback for string-only questions
   };
 
+  // Renders the content of an option, including image if present
   const renderOptionContent = (opt) => {
     if (typeof opt === 'object') {
       return (
@@ -48,22 +51,22 @@ const QuestionList = ({
         </>
       );
     }
-    return opt;
+    return opt; // Fallback for string-only options
   };
 
+  // Adds/removes a question from the selectedQuestions array
   const handleQuestionSelect = (question) => {
     setSelectedQuestions(prev =>
       prev.some(q => q.id === question.id)
-        ? prev.filter(q => q.id !== question.id)
-        : [...prev, question]
+        ? prev.filter(q => q.id !== question.id) // Deselect if already selected
+        : [...prev, question] // Add if not selected
     );
   };
 
+  // Placeholder for delete functionality — currently just shows toast
   const handleDeleteQuestion = (e, questionId) => {
-    e.stopPropagation();
-    // This would need to be connected to the actual delete functionality in the parent component
-    // For now, just show a toast notification
-    toast.success('Question deleted');
+    e.stopPropagation(); // Prevents triggering parent click
+    toast.success('Question deleted'); // Notification
   };
 
   return (
@@ -72,11 +75,11 @@ const QuestionList = ({
         <div className="bg-white rounded-lg shadow p-4 md:p-6 mb-6">
           <div className="flex flex-wrap justify-between items-center mb-12">
             <h3 className="text-lg font-bold">
-              {selectedChapter} Questions ({questions.length})
+              {selectedChapter} Questions ({questions.length}) {/* Shows chapter and count */}
             </h3>
             <div className="space-x-2">
               <button
-                onClick={() => setSelectedQuestions([])}
+                onClick={() => setSelectedQuestions([])} // Clears all selected questions
                 className="px-3 py-1 md:px-4 md:py-2 bg-red-100 text-red-600 rounded hover:bg-red-200"
               >
                 Clear
@@ -90,20 +93,18 @@ const QuestionList = ({
                 key={question.id}
                 className={`border rounded p-3 md:p-6 cursor-pointer ${
                   selectedQuestions.some(q => q.id === question.id)
-                    ? 'bg-blue-50 border-blue-300'
+                    ? 'bg-blue-50 border-blue-300' // Highlight if selected
                     : 'hover:bg-gray-50'
                 }`}
-                onClick={() => handleQuestionSelect(question)}
+                onClick={() => handleQuestionSelect(question)} // Toggle selection
               >
                 <div className="flex justify-between items-start">
                   <div className="flex-1 overflow-hidden">
                     <div className="flex items-start mb-3">
-                      <span className="font-bold text-lg mr-2">Q{index + 1}.
-
+                      <span className="font-bold text-lg mr-2">Q{index + 1}.</span>
                       <pre className="font-medium whitespace-pre-wrap break-words mb-8 flex-1">
-                        {renderQuestionContent(question.question)}
+                        {renderQuestionContent(question.question)} {/* Render question text/image */}
                       </pre>
-                      </span>
                     </div>
                     {question.questionImage && (
                       <div className="w-full flex justify-center mb-3">
@@ -114,21 +115,23 @@ const QuestionList = ({
                         />
                       </div>
                     )}
+
+                    {/* Display options */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {question.options.map((opt, idx) => (
                         <div
                           key={idx}
                           className={`p-2 rounded ${
                             idx === question.correctAnswerIndex
-                              ? 'bg-green-100 border-green-300'
+                              ? 'bg-green-100 border-green-300' // Highlight correct option
                               : 'bg-gray-100'
                           }`}
                         >
                           <span className="font-bold">{String.fromCharCode(65 + idx)}.</span>
                           <span className="ml-2 whitespace-pre-wrap break-words">
-                            {typeof opt === 'object' ? opt.text : opt}
+                            {typeof opt === 'object' ? opt.text : opt} {/* Render option text */}
                           </span>
-                          {/* Only render the image once by prioritizing optionImages if it exists */}
+                          {/* Render image if exists in optionImages */}
                           {question.optionImages?.[idx] && (
                             <div className="w-full flex justify-center mt-1">
                               <img
@@ -138,7 +141,7 @@ const QuestionList = ({
                               />
                             </div>
                           )}
-                          {/* If no optionImages exists, check for the image in the opt object */}
+                          {/* Or render from object structure if optionImages are not available */}
                           {!question.optionImages?.[idx] && typeof opt === 'object' && opt.image && (
                             <div className="w-full flex justify-center mt-1">
                               <img
@@ -152,18 +155,21 @@ const QuestionList = ({
                       ))}
                     </div>
                   </div>
+
+                  {/* Side panel: marks, edit, delete */}
                   <div className="ml-2 md:ml-4 text-sm text-gray-600 flex flex-col items-end">
                     <p>{question.marks} marks</p>
                     <div className="flex flex-col mt-2">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          startEditingQuestion(question);
+                          startEditingQuestion(question); // Opens in edit mode
                         }}
                         className="text-blue-600 hover:text-blue-800 mb-2"
                       >
                         Edit
                       </button>
+                      {/* Uncomment to enable delete */}
                       {/* <button
                         onClick={(e) => handleDeleteQuestion(e, question.id)}
                         className="text-red-600 hover:text-red-800"
@@ -179,14 +185,17 @@ const QuestionList = ({
         </div>
       )}
 
+      {/* Render selected questions summary if any */}
       {selectedQuestions.length > 0 && (
         <div className="bg-white rounded-lg shadow p-4 md:p-6">
           <div className="flex flex-wrap justify-between items-center mb-4">
             <h3 className="text-lg font-bold">Selected Questions ({selectedQuestions.length})</h3>
             <div className="flex flex-wrap items-center gap-2 md:gap-4">
-              <p className="text-base md:text-lg font-semibold">Total Marks: {testDetails.totalMarks}</p>
+              <p className="text-base md:text-lg font-semibold">
+                Total Marks: {testDetails.totalMarks} {/* Display total marks */}
+              </p>
               <button
-                onClick={() => setIsAddingCustomQuestion(true)}
+                onClick={() => setIsAddingCustomQuestion(true)} // Opens custom question form
                 className="px-3 py-1 md:px-4 md:py-2 bg-green-600 text-white rounded hover:bg-green-700"
               >
                 Add Question
@@ -194,6 +203,7 @@ const QuestionList = ({
             </div>
           </div>
 
+          {/* List of selected questions */}
           <div className="space-y-2">
             {selectedQuestions.map((question, idx) => (
               <div key={question.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
@@ -206,17 +216,19 @@ const QuestionList = ({
                         : question.question}
                     </p>
                   </div>
+                  {/* Show if image exists */}
                   {(question.questionImage || 
                    (typeof question.question === 'object' && question.question.image)) && (
                     <span className="ml-2 text-blue-600">[Image]</span>
                   )}
                 </div>
+                {/* Action buttons */}
                 <div className="flex items-center ml-2">
                   <span className="text-sm text-gray-600 mr-2">{question.marks} marks</span>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      startEditingQuestion(question);
+                      startEditingQuestion(question); // Open edit mode
                     }}
                     className="text-blue-600 hover:text-blue-800 mr-2"
                   >
@@ -225,7 +237,7 @@ const QuestionList = ({
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      setSelectedQuestions(prev => prev.filter(q => q.id !== question.id));
+                      setSelectedQuestions(prev => prev.filter(q => q.id !== question.id)); // Remove from selected
                     }}
                     className="text-red-600 hover:text-red-800"
                   >
@@ -236,6 +248,7 @@ const QuestionList = ({
             ))}
           </div>
 
+          {/* Final submission button */}
           <button
             onClick={handleAssignTest}
             className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 mt-4"
@@ -249,10 +262,3 @@ const QuestionList = ({
 };
 
 export default QuestionList;
-
-
-
-
-
-
-

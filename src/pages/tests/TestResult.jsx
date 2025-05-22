@@ -4,25 +4,32 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../Context/AuthContext';
 
 const TestResult = () => {
+  // Get test ID from URL parameters
   const { testId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [test, setTest] = useState(null);
-  const [result, setResult] = useState(null);
-  const [loading, setLoading] = useState(true);
+  
+  // State management
+  const [test, setTest] = useState(null); // Stores the test data
+  const [result, setResult] = useState(null); // Stores the user's test result
+  const [loading, setLoading] = useState(true); // Loading state
 
+  // Fetch test and result data when component mounts or when testId/user changes
   useEffect(() => {
     const fetchTestAndResult = () => {
       try {
+        // Check if user is authenticated
         if (!user || !user.email) {
           throw new Error('User not authenticated');
         }
 
+        // Get assigned tests from localStorage
         const storedTests = localStorage.getItem('assignedTests');
         if (!storedTests) {
           throw new Error('No tests found');
         }
 
+        // Find the current test by ID
         const allTests = JSON.parse(storedTests);
         const currentTest = allTests.find(t => t.id === testId);
         
@@ -32,9 +39,11 @@ const TestResult = () => {
         
         setTest(currentTest);
         
+        // Try to get result from test's results first
         if (currentTest.results && currentTest.results[user.email]) {
           setResult(currentTest.results[user.email]);
         } else {
+          // Fallback to completedTests if not found in test results
           const completedTests = JSON.parse(localStorage.getItem('completedTests') || '[]');
           const completedTest = completedTests.find(
             ct => ct.testId === testId && ct.studentEmail === user.email
@@ -54,14 +63,17 @@ const TestResult = () => {
       }
     };
     
+    // Only fetch if user is authenticated
     if (user) {
       fetchTestAndResult();
     }
   }, [testId, user, navigate]);
 
+  // Helper function to render question content (text + optional image)
   const renderQuestionContent = (question) => {
     if (!question) return null;
     
+    // Handle object-based questions (with text and optional image)
     if (typeof question === 'object' && question.text) {
       return (
         <>
@@ -79,6 +91,7 @@ const TestResult = () => {
       );
     }
     
+    // Handle string-based questions
     return (
       <>
         <span className="whitespace-pre-wrap break-words">{question}</span>
@@ -86,9 +99,11 @@ const TestResult = () => {
     );
   };
 
+  // Helper function to render option content (text + optional image)
   const renderOptionContent = (option, optionImage) => {
     if (!option) return null;
     
+    // Handle object-based options (with text and optional image)
     if (typeof option === 'object' && option.text) {
       return (
         <>
@@ -106,6 +121,7 @@ const TestResult = () => {
       );
     }
     
+    // Handle string-based options
     return (
       <>
         <span className="whitespace-pre-wrap break-words">{option}</span>
@@ -122,6 +138,7 @@ const TestResult = () => {
     );
   };
 
+  // Loading state
   if (loading) {
     return (
       <div className="p-6 max-w-4xl mx-auto">
@@ -133,6 +150,7 @@ const TestResult = () => {
     );
   }
   
+  // Error state - test or result not found
   if (!test || !result) {
     return (
       <div className="p-6 max-w-4xl mx-auto">
@@ -152,10 +170,12 @@ const TestResult = () => {
     );
   }
 
+  // Main result display
   return (
     <div className="p-4 md:p-6 max-w-4xl mx-auto">
       <h1 className="text-2xl font-bold mb-6">Test Result</h1>
       
+      {/* Test summary card */}
       <div className="bg-white rounded-lg shadow mb-6">
         <div className="p-4 md:p-6 border-b">
           <h2 className="text-xl font-bold mb-2 break-words">{test.title}</h2>
@@ -163,6 +183,7 @@ const TestResult = () => {
           <p className="text-gray-600">Submitted: {new Date(result.submittedAt).toLocaleString()}</p>
         </div>
         
+        {/* Score display */}
         <div className="p-4 md:p-6">
           <div className="flex justify-between items-center mb-6">
             <div>
@@ -185,6 +206,7 @@ const TestResult = () => {
             </div>
           </div>
           
+          {/* Progress bar visualization */}
           <div className="w-full bg-gray-200 rounded-full h-4 mb-4">
             <div 
               className={`h-4 rounded-full ${
@@ -198,6 +220,7 @@ const TestResult = () => {
         </div>
       </div>
       
+      {/* Detailed answers section */}
       {result.answers && test.questions && (
         <div className="bg-white rounded-lg shadow mb-6">
           <div className="p-4 md:p-6 border-b">
@@ -210,6 +233,7 @@ const TestResult = () => {
                 const userAnswer = result.answers[question.id];
                 let isCorrect = false;
                 
+                // Determine if answer is correct based on question type
                 if (typeof question.correctAnswer === 'object' && question.correctAnswer.text) {
                   isCorrect = userAnswer === question.correctAnswer.text;
                 } else if (question.correctAnswerIndex !== undefined) {
@@ -225,6 +249,7 @@ const TestResult = () => {
                       isCorrect ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
                     }`}
                   >
+                    {/* Question display */}
                     <div className="flex flex-col md:flex-row justify-between flex-wrap gap-2">
                       <div className="font-medium mb-2 max-w-xl break-words">
                         <span className="mr-2">Q{index + 1}:</span>
@@ -240,6 +265,7 @@ const TestResult = () => {
                         )}
                       </div>
                       
+                      {/* Correct/incorrect indicator */}
                       <span className="font-medium whitespace-nowrap">
                         {isCorrect ? (
                           <span className="text-green-600">✓ Correct</span>
@@ -249,9 +275,11 @@ const TestResult = () => {
                       </span>
                     </div>
                     
+                    {/* Options display */}
                     <div className="mt-3 space-y-2">
                       {question.options.map((option, optIndex) => {
                         let isCorrectOption = false;
+                        // Determine correct option based on question type
                         if (question.correctAnswerIndex !== undefined) {
                           isCorrectOption = optIndex === question.correctAnswerIndex;
                         } else {
@@ -259,6 +287,7 @@ const TestResult = () => {
                         }
                         
                         let isUserChoice = false;
+                        // Determine if this was the user's choice
                         if (typeof option === 'object' && option.text) {
                           isUserChoice = userAnswer === option.text;
                         } else {
@@ -297,6 +326,7 @@ const TestResult = () => {
                       })}
                     </div>
                     
+                    {/* Question marks */}
                     <div className="mt-2 text-right">
                       <span className="text-sm text-gray-600">
                         Worth: {question.marks} marks
@@ -310,6 +340,7 @@ const TestResult = () => {
         </div>
       )}
       
+      {/* Back button */}
       <div className="flex justify-center">
         <Link 
           to="/assigned-tests" 

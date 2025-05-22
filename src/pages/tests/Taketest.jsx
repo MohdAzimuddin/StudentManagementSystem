@@ -5,18 +5,23 @@ import { toast } from 'react-hot-toast';
 import { useAuth } from '../../Context/AuthContext';
 
 const TakeTest = () => {
+  // Get test ID from URL parameters
   const { testId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [test, setTest] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [answers, setAnswers] = useState({});
-  const [timeLeft, setTimeLeft] = useState(0);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   
+  // State management
+  const [test, setTest] = useState(null); // Stores the test data
+  const [loading, setLoading] = useState(true); // Loading state
+  const [answers, setAnswers] = useState({}); // Stores user's answers
+  const [timeLeft, setTimeLeft] = useState(0); // Countdown timer
+  const [isSubmitting, setIsSubmitting] = useState(false); // Form submission state
+
+  // Fetch test data when component mounts or when testId/user changes
   useEffect(() => {
     const fetchTest = () => {
       try {
+        // Get assigned tests from localStorage
         const storedTests = localStorage.getItem('assignedTests');
         if (!storedTests) {
           toast.error('No tests found');
@@ -24,6 +29,7 @@ const TakeTest = () => {
           return;
         }
         
+        // Find the current test by ID
         const allTests = JSON.parse(storedTests);
         const currentTest = allTests.find(t => t.id === testId);
         
@@ -33,6 +39,7 @@ const TakeTest = () => {
           return;
         }
         
+        // Check if user has already completed this test
         const completedTests = JSON.parse(localStorage.getItem('completedTests') || '[]');
         if (user && completedTests.some(ct => ct.testId === testId && ct.studentEmail === user.email)) {
           toast.error('You have already completed this test');
@@ -40,9 +47,11 @@ const TakeTest = () => {
           return;
         }
         
+        // Set test data and initialize timer
         setTest(currentTest);
-        setTimeLeft(currentTest.duration * 60);
+        setTimeLeft(currentTest.duration * 60); // Convert minutes to seconds
         
+        // Initialize empty answers object
         const initialAnswers = {};
         currentTest.questions.forEach(q => {
           initialAnswers[q.id] = null;
@@ -57,11 +66,13 @@ const TakeTest = () => {
       }
     };
     
+    // Only fetch test if user is authenticated
     if (user) {
       fetchTest();
     }
   }, [testId, navigate, user]);
   
+  // Timer effect - runs every second when test is loaded and time is remaining
   useEffect(() => {
     if (!test || timeLeft <= 0) return;
     
@@ -69,22 +80,24 @@ const TakeTest = () => {
       setTimeLeft(prev => {
         if (prev <= 1) {
           clearInterval(timer);
-          handleTimeUp();
+          handleTimeUp(); // Automatically submit when time is up
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
     
-    return () => clearInterval(timer);
+    return () => clearInterval(timer); // Cleanup on unmount
   }, [test, timeLeft]);
   
+  // Format seconds into MM:SS display
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
   
+  // Handle when user selects an answer option
   const handleAnswerSelect = (questionId, optionIndex) => {
     setAnswers({
       ...answers,
@@ -92,6 +105,7 @@ const TakeTest = () => {
     });
   };
   
+  // Calculate user's score based on correct answers
   const calculateScore = () => {
     if (!test) return 0;
     
@@ -105,26 +119,31 @@ const TakeTest = () => {
     return score;
   };
   
+  // Handle when time runs out
   const handleTimeUp = () => {
     toast.error("Time's up! Submitting your answers...");
     handleSubmitTest();
   };
   
+  // Submit the test with user's answers
   const handleSubmitTest = async () => {
     if (isSubmitting) return;
     
     try {
       setIsSubmitting(true);
       
+      // Validate user is authenticated
       if (!user || !user.email) {
         toast.error('User not authenticated');
         return;
       }
       
+      // Calculate results
       const score = calculateScore();
       const totalPossible = test.totalMarks;
       const percentage = Math.round((score / totalPossible) * 100);
       
+      // Create test result object
       const testResult = {
         testId: test.id,
         studentEmail: user.email,
@@ -137,12 +156,14 @@ const TakeTest = () => {
         timeRemaining: timeLeft
       };
       
+      // Update the test in localStorage with results
       const storedTests = localStorage.getItem('assignedTests');
       if (storedTests) {
         const allTests = JSON.parse(storedTests);
         const testIndex = allTests.findIndex(t => t.id === testId);
         
         if (testIndex !== -1) {
+          // Initialize results and notifications if they don't exist
           if (!allTests[testIndex].results) {
             allTests[testIndex].results = {};
           }
@@ -152,6 +173,7 @@ const TakeTest = () => {
             allTests[testIndex].notifications = [];
           }
           
+          // Add notification for teacher
           allTests[testIndex].notifications.push({
             student: user.name || user.email,
             submittedAt: new Date().toISOString(),
@@ -159,11 +181,13 @@ const TakeTest = () => {
             read: false
           });
           
+          // Save updated tests
           localStorage.setItem('assignedTests', JSON.stringify(allTests));
           window.dispatchEvent(new Event('assignedTestsUpdated'));
         }
       }
       
+      // Add to completed tests list
       const completedTests = JSON.parse(localStorage.getItem('completedTests') || '[]');
       completedTests.push({
         testId: test.id,
@@ -177,6 +201,7 @@ const TakeTest = () => {
       
       localStorage.setItem('completedTests', JSON.stringify(completedTests));
       
+      // Show success and navigate to results
       toast.success('Test submitted successfully!');
       navigate('/test-result/' + test.id);
       
@@ -188,6 +213,7 @@ const TakeTest = () => {
     }
   };
   
+  // Warn user if they try to leave the page with unsaved answers
   useEffect(() => {
     const handleBeforeUnload = (e) => {
       if (!isSubmitting && test) {
@@ -201,6 +227,7 @@ const TakeTest = () => {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [test, isSubmitting]);
   
+  // Helper function to render question content (text + optional image)
   const renderQuestionContent = (question) => {
     if (typeof question === 'object') {
       return (
@@ -234,6 +261,7 @@ const TakeTest = () => {
     );
   };
 
+  // Helper function to render option content (text + optional image)
   const renderOptionContent = (option, optionImage) => {
     if (typeof option === 'object') {
       return (
@@ -267,6 +295,7 @@ const TakeTest = () => {
     );
   };
 
+  // Loading state
   if (loading) {
     return (
       <div className="p-6 w-full max-w-4xl mx-auto">
@@ -278,6 +307,7 @@ const TakeTest = () => {
     );
   }
   
+  // Test not found state
   if (!test) {
     return (
       <div className="p-6 w-full max-w-4xl mx-auto">
@@ -297,8 +327,10 @@ const TakeTest = () => {
     );
   }
   
+  // Main test interface
   return (
     <div className="p-4 md:p-6 w-full max-w-4xl mx-auto mb-12">
+      {/* Test header with title and timer */}
       <div className="bg-white rounded-lg shadow p-4 mb-6 sticky top-0 z-10">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
           <h1 className="text-xl font-bold break-words w-full md:w-auto">{test.title}</h1>
@@ -313,6 +345,7 @@ const TakeTest = () => {
         </div>
       </div>
       
+      {/* Questions list */}
       <div className="space-y-6 w-full">
         {test.questions.map((question, index) => {
           const questionContent = typeof question.question === 'object' 
@@ -325,7 +358,7 @@ const TakeTest = () => {
           return (
             <div key={question.id} className="bg-white rounded-lg shadow p-4 md:p-6 w-full">
               <div className="flex flex-col md:flex-row justify-between gap-2 w-full">
-                <div className="flex-1 min-w-0"> {/* Added min-w-0 to prevent flex item overflow */}
+                <div className="flex-1 min-w-0">
                   <h3 className="text-lg font-medium mb-2 md:mb-4 w-full">
                     <span className="inline-block">Q{index + 1}:</span>{' '}
                     <div className="whitespace-pre-wrap break-words inline-block w-full">
@@ -347,6 +380,7 @@ const TakeTest = () => {
                 </span>
               </div>
               
+              {/* Answer options */}
               <div className="space-y-3 mt-4 w-full">
                 {question.options.map((option, optIndex) => {
                   const optionText = typeof option === 'object' ? option.text : option;
@@ -365,10 +399,10 @@ const TakeTest = () => {
                       onClick={() => handleAnswerSelect(question.id, optIndex)}
                     >
                       <div className="flex items-start w-full">
-                        <span className="mr-2 font-bold mt-1 min-w-[20px]"> {/* Added min-width to prevent shifting */}
+                        <span className="mr-2 font-bold mt-1 min-w-[20px]">
                           {String.fromCharCode(65 + optIndex)}.
                         </span>
-                        <div className="flex-1 break-words min-w-0"> {/* Added min-w-0 */}
+                        <div className="flex-1 break-words min-w-0">
                           {renderOptionContent(option, optionImage)}
                         </div>
                       </div>
@@ -381,6 +415,7 @@ const TakeTest = () => {
         })}
       </div>
       
+      {/* Fixed submit button at bottom */}
       <div className="fixed bottom-0 left-0 right-0 bg-white p-4 shadow-md">
         <div className="w-full max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center gap-2">
           <div className="w-full md:w-auto">
